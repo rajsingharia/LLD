@@ -63,9 +63,9 @@ class OneDirectionElevatorMovementStrategy implements ElevatorMovementStrategy {
             currentFloor++;
         }
 
-        if(currentFloor == 0) {
+        if(currentFloor == elevatorService.getMinFloor()) {
             currentDirection = Direction.UP;
-        } else if(currentFloor == elevatorService.getTotalFloor()) {
+        } else if(currentFloor == elevatorService.getMaxFloor()) {
             currentDirection = Direction.DOWN;
         }
 
@@ -96,21 +96,23 @@ class NearestRequestStrategy implements ElevatorMovementStrategy {
 class ElevatorService {
     private Integer currentFloor;
     private Direction direction;
-    private final Integer totalFloor;
+    private final Integer minFloor;
+    private final Integer maxFloor;
     private final List<CallLiftData> callLiftDataList;
     private final List<Integer> goToDataList;
     private Gate gate;
     private final ElevatorMovementStrategy elevatorMovementStrategy;
     private ElevatorState elevatorState;
 
-    ElevatorService() {
+    ElevatorService(Integer maxFloor, Integer minFloor, ElevatorMovementStrategy elevatorMovementStrategy) {
         this.currentFloor = 0;
         this.direction = Direction.UP;
-        this.totalFloor = 10;
-        callLiftDataList = new ArrayList<>();
+        this.minFloor = minFloor;
+        this.maxFloor = maxFloor;
+        this.callLiftDataList = new ArrayList<>();
         this.goToDataList = new ArrayList<>();
         this.gate = Gate.CLOSE;
-        this.elevatorMovementStrategy = new OneDirectionElevatorMovementStrategy();
+        this.elevatorMovementStrategy = elevatorMovementStrategy;
         this.elevatorState = ElevatorState.IDLE;
     }
 
@@ -130,8 +132,12 @@ class ElevatorService {
         this.direction = direction;
     }
 
-    public int getTotalFloor() {
-        return totalFloor;
+    public int getMaxFloor() {
+        return maxFloor;
+    }
+
+    public Integer getMinFloor() {
+        return minFloor;
     }
 
     public List<CallLiftData> getCallLiftDataList() {
@@ -143,11 +149,14 @@ class ElevatorService {
     }
 
     private void startMoving() {
-        if (this.elevatorState == ElevatorState.MOVING || this.elevatorState == ElevatorState.DOOR_OPEN) {
+        if (this.elevatorState == ElevatorState.MOVING) {
             // If already moving don't move again
             return;
         }
         while(!getCallLiftDataList().isEmpty() || !getGoToDataList().isEmpty()) {
+            if(this.elevatorState == ElevatorState.DOOR_OPEN) {
+                continue;
+            }
             this.elevatorState = ElevatorState.MOVING;
             // get next move
             NextLiftMove nextLiftMove = elevatorMovementStrategy.findNextMove(this);
@@ -207,6 +216,7 @@ class ElevatorService {
 
     private void openGate() {
         this.gate = Gate.OPEN;
+        this.elevatorState = ElevatorState.DOOR_OPEN;
 
         try {
             Thread.sleep(1000);
