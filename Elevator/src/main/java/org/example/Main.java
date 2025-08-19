@@ -81,7 +81,7 @@ class ElevatorService implements Runnable {
         this.callLiftDataList = new ArrayList<>();
         this.gate = Gate.CLOSE;
         this.elevatorMovementStrategy = elevatorMovementStrategy;
-        this.elevatorState = ElevatorState.IDLE;
+        this.changeState(ElevatorState.IDLE);
     }
 
     public Integer getElevatorId() {
@@ -89,7 +89,7 @@ class ElevatorService implements Runnable {
     }
 
     private void goToFloor(Integer targetFloor) {
-        this.elevatorState = ElevatorState.MOVING;
+        this.changeState(ElevatorState.MOVING);
         while(!Objects.equals(this.currentFloor, targetFloor)) {
             if(this.currentFloor < targetFloor) {
                 this.direction = Direction.UP;
@@ -99,7 +99,7 @@ class ElevatorService implements Runnable {
                 this.currentFloor--;
             }
         }
-        this.elevatorState = ElevatorState.IDLE;
+        this.changeState(ElevatorState.IDLE);
     }
 
     public void requestElevator(Integer floorCalledFrom, Direction fllorCalledDirection) {
@@ -109,7 +109,7 @@ class ElevatorService implements Runnable {
 
     private void openGate() {
         this.gate = Gate.OPEN;
-        this.elevatorState = ElevatorState.DOOR_OPEN;
+        this.changeState(ElevatorState.DOOR_OPEN);
 
         try {
             Thread.sleep(1000);
@@ -123,6 +123,11 @@ class ElevatorService implements Runnable {
 
     private void emergency() {
         this.isRunning = false;
+    }
+
+    private void changeState(ElevatorState newState) {
+        this.elevatorState = (newState);
+        System.out.println("State for :: " + elevatorId + " :: " + newState);
     }
 
     @Override
