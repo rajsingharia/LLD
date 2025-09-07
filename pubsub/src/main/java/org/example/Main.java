@@ -137,7 +137,11 @@ class TopicSubscriberController implements Runnable {
                 message = topic.getMessageList().get(currentOffset);
             }
 
-            subscriber.onMessage(message);
+            try {
+                subscriber.onMessage(message);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
